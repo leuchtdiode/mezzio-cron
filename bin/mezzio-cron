@@ -1,0 +1,88 @@
+#!/usr/bin/env php
+<?php
+
+use Cron\Command;
+use Cron\Execution\Process\Processor;
+use Cron\Execution\Trigger;
+use Cron\ExecutionParams;
+use Cron\Help\Help;
+use Cron\Job\Listing as JobListing;
+use Cron\Monitoring\Process as Monitoring;
+use Cron\Wiki\Synchronize as WikiSynchronize;
+
+$cwd = getcwd();
+if (is_dir($cwd . '/vendor'))
+{
+	chdir($cwd);
+	require 'vendor/autoload.php';
+}
+else if (file_exists($a = __DIR__ . '/../../../autoload.php'))
+{
+	require $a;
+}
+else if (file_exists($a = __DIR__ . '/../vendor/autoload.php'))
+{
+	require $a;
+}
+else if (file_exists($a = __DIR__ . '/../autoload.php'))
+{
+	require $a;
+}
+else
+{
+	fwrite(STDERR, 'Cannot locate autoloader; please run "composer install"' . PHP_EOL);
+	exit(1);
+}
+
+set_time_limit(0);
+
+$container 	= require $cwd . '/config/container.php';
+$config 	= $container->get('config');
+
+if (
+	($config['cron']['enabled'] ?? null) === null
+	|| ($config['cron']['jobs'] ?? null) === null
+)
+{
+	echo 'Config array key "cron" and all mandatory data (cron.enabled, cron.jobs) has to be set';
+	exit(1);
+}
+
+$command = $argv[1] ?? 'help';
+
+const COMMANDS = [
+	'help'       => Help::class,
+	'process'    => Processor::class,
+	'list'       => JobListing::class,
+	'wiki'       => WikiSynchronize::class,
+	'monitoring' => Monitoring::class,
+	'trigger'    => Trigger::class,
+];
+
+if (!($commandExecutor = COMMANDS[$command] ?? null))
+{
+	$commandExecutor = Help::class;
+}
+
+try
+{
+	/**
+	 * @var Command $executor
+	 */
+	$executor = $container->get($commandExecutor);
+
+	$executor->execute(
+		ExecutionParams::create()
+			->setArguments(
+				array_splice($argv, 2)
+			)
+	);
+
+	exit(0);
+}
+catch (Throwable $ex)
+{
+	error_log($ex->getMessage());
+}
+
+exit(1);
