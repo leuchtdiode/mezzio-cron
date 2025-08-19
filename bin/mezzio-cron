@@ -10,34 +10,14 @@ use Cron\Job\Listing as JobListing;
 use Cron\Monitoring\Process as Monitoring;
 use Cron\Wiki\Synchronize as WikiSynchronize;
 
-$cwd = getcwd();
-if (is_dir($cwd . '/vendor'))
-{
-	chdir($cwd);
-	require 'vendor/autoload.php';
-}
-else if (file_exists($a = __DIR__ . '/../../../autoload.php'))
-{
-	require $a;
-}
-else if (file_exists($a = __DIR__ . '/../vendor/autoload.php'))
-{
-	require $a;
-}
-else if (file_exists($a = __DIR__ . '/../autoload.php'))
-{
-	require $a;
-}
-else
-{
-	fwrite(STDERR, 'Cannot locate autoloader; please run "composer install"' . PHP_EOL);
-	exit(1);
-}
+chdir(__DIR__ . '/../../../..');
+
+require 'vendor/autoload.php';
 
 set_time_limit(0);
 
-$container 	= require $cwd . '/config/container.php';
-$config 	= $container->get('config');
+$container = require 'config/container.php';
+$config    = $container->get('config');
 
 if (
 	($config['cron']['enabled'] ?? null) === null
