@@ -3,9 +3,11 @@ declare(strict_types=1);
 
 namespace Cron\Health;
 
-use Common\Health\Check;
-use Common\Health\CheckResult;
 use Cron\Monitoring\FaultyCronsProvider;
+use Monitoring\Health\Check;
+use Monitoring\Health\CheckResult;
+use RuntimeException;
+use Throwable;
 
 readonly class FaultyCronsCheck implements Check
 {
@@ -15,8 +17,16 @@ readonly class FaultyCronsCheck implements Check
 	{
 	}
 
+	/**
+	 * @throws Throwable
+	 */
 	public function check(): CheckResult
 	{
+		if (!interface_exists('\Monitoring\Health\Check'))
+		{
+			throw new RuntimeException('leuchtdiode/mezzio-monitoring is mandatory');
+		}
+
 		$result = new CheckResult();
 		$result->setKey('cron-faulty-crons');
 
