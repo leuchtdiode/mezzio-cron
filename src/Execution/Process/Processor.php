@@ -6,6 +6,7 @@ namespace Cron\Execution\Process;
 use Amp;
 use Amp\Process\Process;
 use Common\Db\FilterChain;
+use Common\Shutdown\State;
 use Cron\Command;
 use Cron\Cron;
 use Cron\Db\Execution\Entity as ExecutionEntity;
@@ -31,7 +32,8 @@ class Processor implements Command
 		private readonly Repository $repository,
 		private readonly EntityManager $entityManager,
 		private readonly Cleaner $cleaner,
-		private readonly Host $host
+		private readonly Host $host,
+		private readonly State $shutdownState
 	)
 	{
 	}
@@ -44,7 +46,10 @@ class Processor implements Command
 	{
 		$cronConfig = $this->config['cron'] ?? [];
 
-		if (!$cronConfig['enabled'])
+		if (
+			!$cronConfig['enabled']
+			|| $this->shutdownState->isShuttingDown()
+		)
 		{
 			return;
 		}
