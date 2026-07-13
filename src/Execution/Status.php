@@ -5,6 +5,6 @@ namespace Cron\Execution;
 
 class Status
 {
-	const RUNNING  = 'running';
-	const FINISHED = 'finished';
+	const string RUNNING  = 'running';
+	const string FINISHED = 'finished';
 }

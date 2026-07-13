@@ -44,6 +44,7 @@ class Synchronize implements Command
 
 		$generallyEnabled = $cronConfig['enabled'];
 		$jobsOnly         = $cronConfig['jobsOnly'] ?? [];
+		$jobsExclude      = $cronConfig['jobsExclude'] ?? [];
 
 		$host = $this->host->get();
 
@@ -53,7 +54,10 @@ class Synchronize implements Command
 		{
 			$cron = Cron::fromArray($cron);
 
-			$enabled = $generallyEnabled && $cron->isEnabled() && (!$jobsOnly || in_array($key, $jobsOnly));
+			$enabled = $generallyEnabled
+				&& $cron->isEnabled()
+				&& (!$jobsOnly || in_array($key, $jobsOnly))
+				&& !in_array($key, $jobsExclude);
 
 			if (!$enabled)
 			{

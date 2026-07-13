@@ -3,10 +3,10 @@ declare(strict_types=1);
 
 namespace Cron\Wiki;
 
-use Interop\Container\ContainerInterface;
 use Laminas\Http\Client as HttpClient;
 use Laminas\ServiceManager\Factory\FactoryInterface;
 use Psr\Container\ContainerExceptionInterface;
+use Psr\Container\ContainerInterface;
 use Psr\Container\NotFoundExceptionInterface;
 
 class ClientFactory implements FactoryInterface

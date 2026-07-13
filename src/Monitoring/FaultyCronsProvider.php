@@ -32,6 +32,7 @@ class FaultyCronsProvider
 
 		$generallyEnabled = $cronConfig['enabled'];
 		$jobsOnly         = $cronConfig['jobsOnly'] ?? [];
+		$jobsExclude      = $cronConfig['jobsExclude'] ?? [];
 
 		$faultyCrons = [];
 
@@ -39,7 +40,10 @@ class FaultyCronsProvider
 		{
 			$cron = Cron::fromArray($cron);
 
-			$enabled = $generallyEnabled && $cron->isEnabled() && (!$jobsOnly || in_array($key, $jobsOnly));
+			$enabled = $generallyEnabled
+				&& $cron->isEnabled()
+				&& (!$jobsOnly || in_array($key, $jobsOnly))
+				&& !in_array($key, $jobsExclude);
 
 			if (!$enabled)
 			{

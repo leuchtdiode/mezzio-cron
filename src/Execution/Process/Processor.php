@@ -10,8 +10,8 @@ use Common\Shutdown\State;
 use Cron\Command;
 use Cron\Cron;
 use Cron\Db\Execution\Entity as ExecutionEntity;
-use Cron\Db\Execution\Repository;
 use Cron\Db\Execution\Filter as ExecutionDbFilter;
+use Cron\Db\Execution\Repository;
 use Cron\Execution\Cleaner;
 use Cron\Execution\ExecuteProcess;
 use Cron\Execution\Status;
@@ -57,7 +57,8 @@ class Processor implements Command
 		// clean up every hour after jobs finished
 		$shouldCleanUp = ((int)(new DateTime())->format('i')) === 0;
 
-		$jobsOnly = $cronConfig['jobsOnly'] ?? [];
+		$jobsOnly    = $cronConfig['jobsOnly'] ?? [];
+		$jobsExclude = $cronConfig['jobsExclude'] ?? [];
 
 		$processBags = [];
 
@@ -65,7 +66,9 @@ class Processor implements Command
 		{
 			$cron = Cron::fromArray($cron);
 
-			$enabled = $cron->isEnabled() && (!$jobsOnly || in_array($key, $jobsOnly));
+			$enabled = $cron->isEnabled()
+				&& (!$jobsOnly || in_array($key, $jobsOnly))
+				&& !in_array($key, $jobsExclude);
 
 			if (!$enabled || !$cron->shouldExecute())
 			{

@@ -10,7 +10,7 @@ use Cron\Wiki\Job;
 
 class Cron
 {
-	const DEFAULT_TIMEOUT = 60;
+	const int DEFAULT_TIMEOUT = 60;
 
 	private ?string     $description = null;
 	private int         $timeout     = self::DEFAULT_TIMEOUT;
