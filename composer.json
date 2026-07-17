@@ -22,7 +22,7 @@
 	],
 	"require": {
 		"php": "~8.4.0 || ~8.5.0",
-		"leuchtdiode/mezzio-common": "^1.2.0",
+		"leuchtdiode/mezzio-common": "^2.0.0",
 		"ramsey/uuid-doctrine": "^2.1.0",
 		"dragonmantank/cron-expression": "^v3.6.0",
 		"amphp/process": "^v1.1.0"
