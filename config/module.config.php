@@ -9,23 +9,13 @@ use Ramsey\Uuid\Doctrine\UuidType;
 return [
 
 	'doctrine' => [
-		'driver'        => [
-			'cron_entities' => [
-				'class' => AttributeDriver::class,
-				'cache' => 'array',
-				'paths' => [ __DIR__ . '/../src/Db' ],
-			],
-			'orm_default'   => [
-				'drivers' => [
-					'Cron' => 'cron_entities',
-				],
-			],
+		'types'  => [
+			UuidType::NAME => UuidType::class,
 		],
-		'configuration' => [
+		'driver' => [
 			'orm_default' => [
-				'types' => [
-					UuidType::NAME => UuidType::class,
-				],
+				'class' => AttributeDriver::class,
+				'paths' => [ __DIR__ . '/../src/Db' ],
 			],
 		],
 	],
