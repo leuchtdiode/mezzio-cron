@@ -4,7 +4,7 @@ declare(strict_types=1);
 namespace Cron\Db\Execution;
 
 use Common\Db\Entity as DbEntity;
-use DateTime;
+use DateTimeInterface;
 use Doctrine\ORM\Mapping as ORM;
 use Ramsey\Uuid\Uuid;
 use Ramsey\Uuid\UuidInterface;
@@ -27,10 +27,10 @@ class Entity implements DbEntity
 	private string $status;
 
 	#[ORM\Column(type: 'datetime', nullable: false)]
-	private DateTime $startTime;
+	private DateTimeInterface $startTime;
 
 	#[ORM\Column(type: 'datetime', nullable: true)]
-	private ?DateTime $endTime = null;
+	private ?DateTimeInterface $endTime = null;
 
 	#[ORM\Column(type: 'integer', nullable: true)]
 	private ?int $exitCode = null;
@@ -80,22 +80,22 @@ class Entity implements DbEntity
 		$this->status = $status;
 	}
 
-	public function getStartTime(): DateTime
+	public function getStartTime(): DateTimeInterface
 	{
 		return $this->startTime;
 	}
 
-	public function setStartTime(DateTime $startTime): void
+	public function setStartTime(DateTimeInterface $startTime): void
 	{
 		$this->startTime = $startTime;
 	}
 
-	public function getEndTime(): ?DateTime
+	public function getEndTime(): ?DateTimeInterface
 	{
 		return $this->endTime;
 	}
 
-	public function setEndTime(?DateTime $endTime): void
+	public function setEndTime(?DateTimeInterface $endTime): void
 	{
 		$this->endTime = $endTime;
 	}
