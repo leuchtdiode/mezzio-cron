@@ -8,6 +8,7 @@ use Cron\Cron;
 use Cron\ExecutionParams;
 use Cron\Host;
 use Exception;
+use Laminas\XmlRpc\Client as XmlRpcClient;
 use Throwable;
 
 class Synchronize implements Command
@@ -33,7 +34,7 @@ class Synchronize implements Command
 			throw new Exception('No config set (cron.wiki)');
 		}
 
-		if (!class_exists('Laminas\\XmlRpc\\Client'))
+		if (!class_exists(XmlRpcClient::class))
 		{
 			throw new Exception('Package laminas/laminas-xmlrpc is mandatory');
 		}

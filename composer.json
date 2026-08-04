@@ -28,7 +28,8 @@
 		"amphp/process": "^v1.1.0"
 	},
 	"suggest": {
-		"laminas/laminas-xmlrpc": "Mandatory for WIKI sync",
+		"laminas/laminas-xmlrpc": "Mandatory for WIKI sync (^3.0.0)",
+		"guzzlehttp/guzzle": "Mandatory for WIKI sync (^7.15.0)",
 		"leuchtdiode/mezzio-notification": "Mandatory for monitoring"
 	},
 	"autoload": {
