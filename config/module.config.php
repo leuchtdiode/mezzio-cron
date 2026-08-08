@@ -3,6 +3,7 @@ declare(strict_types=1);
 
 namespace Cron;
 
+use Cron\Shutdownable\NoProcessingCron;
 use Doctrine\ORM\Mapping\Driver\AttributeDriver;
 use Ramsey\Uuid\Doctrine\UuidType;
 
@@ -23,6 +24,14 @@ return [
 	'dependencies' => [
 		'abstract_factories' => [
 			DefaultFactory::class,
+		],
+	],
+
+	'common' => [
+		'shutdownable' => [
+			'checkers' => [
+				NoProcessingCron::class,
+			],
 		],
 	],
 ];
