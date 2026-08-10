@@ -28,7 +28,7 @@ return [
 	],
 
 	'common' => [
-		'shutdownable' => [
+		'shutdown' => [
 			'checkers' => [
 				NoProcessingCron::class,
 			],
