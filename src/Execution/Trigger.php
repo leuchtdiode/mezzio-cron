@@ -11,6 +11,7 @@ use Cron\Db\Execution\Entity as ExecutionEntity;
 use Cron\Execution\Process\ProcessBag;
 use Cron\ExecutionParams;
 use Cron\Host;
+use Cron\Instance;
 use DateTime;
 use Doctrine\ORM\EntityManager;
 use Exception;
@@ -23,7 +24,8 @@ class Trigger implements Command
 	public function __construct(
 		private readonly array $config,
 		private readonly EntityManager $entityManager,
-		private readonly Host $host
+		private readonly Host $host,
+		private readonly Instance $instance
 	)
 	{
 
@@ -48,8 +50,10 @@ class Trigger implements Command
 
 		$cron = Cron::fromArray($jobConfig);
 
+		// scheduledFor stays null, manually triggered executions are never deduplicated
 		$entity = new ExecutionEntity();
 		$entity->setHost($this->host->get());
+		$entity->setInstance($this->instance->get());
 		$entity->setJob($job);
 
 		$processBag = new ProcessBag(

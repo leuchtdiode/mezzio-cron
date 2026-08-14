@@ -9,7 +9,6 @@ use Common\Db\FilterChain;
 use Common\Shutdown\State;
 use Cron\Command;
 use Cron\Cron;
-use Cron\Db\Execution\Entity as ExecutionEntity;
 use Cron\Db\Execution\Filter as ExecutionDbFilter;
 use Cron\Db\Execution\Repository;
 use Cron\Execution\Cleaner;
@@ -17,6 +16,7 @@ use Cron\Execution\ExecuteProcess;
 use Cron\Execution\Status;
 use Cron\ExecutionParams;
 use Cron\Host;
+use Cron\Instance;
 use DateTime;
 use Doctrine\ORM\EntityManager;
 use Doctrine\ORM\NonUniqueResultException;
@@ -33,6 +33,7 @@ class Processor implements Command
 		private readonly EntityManager $entityManager,
 		private readonly Cleaner $cleaner,
 		private readonly Host $host,
+		private readonly Instance $instance,
 		private readonly State $shutdownState
 	)
 	{
@@ -59,6 +60,14 @@ class Processor implements Command
 
 		$jobsOnly    = $cronConfig['jobsOnly'] ?? [];
 		$jobsExclude = $cronConfig['jobsExclude'] ?? [];
+
+		$now = new DateTime();
+
+		// truncate to the minute, so all instances of this host claim the very same slot
+		$scheduledFor = (clone $now)->setTime(
+			(int)$now->format('G'),
+			(int)$now->format('i')
+		);
 
 		$processBags = [];
 
@@ -87,9 +96,18 @@ class Processor implements Command
 				continue;
 			}
 
-			$entity = new ExecutionEntity();
-			$entity->setHost($this->host->get());
-			$entity->setJob($key);
+			$entity = $this->repository->claim(
+				host: $this->host->get(),
+				instance: $this->instance->get(),
+				job: $key,
+				scheduledFor: $scheduledFor
+			);
+
+			// another instance of this host already claimed the job for this minute
+			if (!$entity)
+			{
+				continue;
+			}
 
 			$processBags[] = new ProcessBag(
 				process: new Process($cron->getExecCommand()),
@@ -111,12 +129,7 @@ class Processor implements Command
 
 			foreach ($processBags as $processBag)
 			{
-				$entity = $processBag->getEntity();
-				$entity->setStartTime(new DateTime());
-				$entity->setStatus(Status::RUNNING);
-
-				$this->entityManager->persist($entity);
-				$this->entityManager->flush($entity);
+				// entity has already been written to db as running by claiming it
 
 				$promises[] = new Amp\Coroutine(
 					call_user_func_array([ $this, 'executeProcess' ], [ $processBag ])

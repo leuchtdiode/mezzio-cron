@@ -11,20 +11,37 @@ use Ramsey\Uuid\UuidInterface;
 
 #[ORM\Entity(repositoryClass: Repository::class)]
 #[ORM\Table(name: 'cron_execution')]
+#[ORM\UniqueConstraint(name: 'cron_execution_schedule', columns: [ 'host', 'job', 'scheduledFor' ])]
 class Entity implements DbEntity
 {
 	#[ORM\Id]
 	#[ORM\Column(type: 'uuid')]
 	private UuidInterface $id;
 
+	/**
+	 * Scheduling scope. All instances sharing this value schedule as one, see Cron\Host.
+	 */
 	#[ORM\Column(type: 'string', nullable: false)]
 	private string $host;
+
+	/**
+	 * The single machine/container which actually executed the job, see Cron\Instance.
+	 */
+	#[ORM\Column(type: 'string', nullable: false)]
+	private string $instance;
 
 	#[ORM\Column(type: 'string', nullable: false)]
 	private string $job;
 
 	#[ORM\Column(type: 'string', nullable: false)]
 	private string $status;
+
+	/**
+	 * Minute this execution was scheduled for. Null for manually triggered executions,
+	 * which are never deduplicated.
+	 */
+	#[ORM\Column(type: 'datetime', nullable: true)]
+	private ?DateTimeInterface $scheduledFor = null;
 
 	#[ORM\Column(type: 'datetime', nullable: false)]
 	private DateTimeInterface $startTime;
@@ -60,6 +77,16 @@ class Entity implements DbEntity
 		$this->host = $host;
 	}
 
+	public function getInstance(): string
+	{
+		return $this->instance;
+	}
+
+	public function setInstance(string $instance): void
+	{
+		$this->instance = $instance;
+	}
+
 	public function getJob(): string
 	{
 		return $this->job;
@@ -78,6 +105,16 @@ class Entity implements DbEntity
 	public function setStatus(string $status): void
 	{
 		$this->status = $status;
+	}
+
+	public function getScheduledFor(): ?DateTimeInterface
+	{
+		return $this->scheduledFor;
+	}
+
+	public function setScheduledFor(?DateTimeInterface $scheduledFor): void
+	{
+		$this->scheduledFor = $scheduledFor;
 	}
 
 	public function getStartTime(): DateTimeInterface
