@@ -4,6 +4,7 @@ declare(strict_types=1);
 namespace Cron\Execution;
 
 use Cron\Cron;
+use Cron\Db\Execution\Entity;
 use Cron\Db\Execution\Repository;
 use Cron\Host;
 use DateTime;
@@ -46,9 +47,36 @@ class Cleaner
 				)
 				->setParameter('host', $this->host->get())
 				->setParameter('job', $key)
-				->setParameter('maxStartTime', $maxStartTime->format('Y-m-d H:i:s'))
+				->setParameter('maxStartTime', $maxStartTime->format('Y-m-d H:i:s'));
+
+			// the newest execution stays, however old: a job without any execution is one that
+			// never ran, see Monitoring\FaultyCronsProvider, and a job that died longer ago than
+			// its clean up threshold must not turn into one of those
+			if (($newest = $this->newest($key)))
+			{
+				$qb
+					->andWhere(
+						$expr->neq('t.id', ':newest')
+					)
+					->setParameter('newest', $newest->getId()->toString());
+			}
+
+			$qb
 				->getQuery()
 				->execute();
 		}
+	}
+
+	private function newest(string $job): ?Entity
+	{
+		return $this->repository->findOneBy(
+			[
+				'host' => $this->host->get(),
+				'job'  => $job,
+			],
+			[
+				'startTime' => 'DESC',
+			]
+		);
 	}
 }

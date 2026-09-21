@@ -14,6 +14,14 @@ You can enable a second crontab for monitoring purposes. Adapt the execution tim
 
 The monitoring job is separate to not interfer with errors which are happening during processing. Monitoring would be useless if the monitoring job dies within exectuion.
 
+A monitored job is faulty when it has no successful execution within its monitoring threshold.
+A job that has never been executed on the host at all is not faulty but **pending**: the health
+check (`Cron\Health\FaultyCronsCheck`) stays healthy and only says `Cron <key> has not been
+executed yet`, and the monitoring does not notify. Otherwise a release which ships a new
+monitored job could never pass a deployment health check, since the job cannot run before the
+release is live. To keep a job that died long ago apart from one that never ran, the clean up
+always keeps the newest execution of every job, however old it is.
+
 Use `vendor/bin/mezzio-cron help` to show all possible commands.
 
 ## Running in multiple containers

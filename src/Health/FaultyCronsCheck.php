@@ -30,19 +30,25 @@ readonly class FaultyCronsCheck implements Check
 		$result = new CheckResult();
 		$result->setKey('cron-faulty-crons');
 
-		$faultyCrons = $this->faultyCronsProvider->get();
+		$report = $this->faultyCronsProvider->report();
 
-		$result->setHealthy(count($faultyCrons) === 0);
+		$result->setHealthy(count($report->getFaulty()) === 0);
 
-		if ($faultyCrons)
+		foreach ($report->getFaulty() as $faultyCron)
 		{
-			foreach ($faultyCrons as $faultyCron)
-			{
-				$result->addMessage(sprintf(
-					'Cron %s is faulty, please check',
-					$faultyCron->getKey()
-				));
-			}
+			$result->addMessage(sprintf(
+				'Cron %s is faulty, please check',
+				$faultyCron->getKey()
+			));
+		}
+
+		// healthy, but said: a job that never ran is a job somebody may be waiting for
+		foreach ($report->getPending() as $key)
+		{
+			$result->addMessage(sprintf(
+				'Cron %s has not been executed yet',
+				$key
+			));
 		}
 
 		return $result;

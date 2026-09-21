@@ -23,10 +23,21 @@ class FaultyCronsProvider
 	}
 
 	/**
+	 * The faulty jobs only - what the monitoring notifies about, see Process. A pending job is
+	 * not among them, see report().
+	 *
 	 * @return FaultyCron[]
 	 * @throws Throwable
 	 */
 	public function get(): array
+	{
+		return $this->report()->getFaulty();
+	}
+
+	/**
+	 * @throws Throwable
+	 */
+	public function report(): Report
 	{
 		$cronConfig = $this->config['cron'];
 
@@ -34,7 +45,8 @@ class FaultyCronsProvider
 		$jobsOnly         = $cronConfig['jobsOnly'] ?? [];
 		$jobsExclude      = $cronConfig['jobsExclude'] ?? [];
 
-		$faultyCrons = [];
+		$report = Report::create();
+		$host   = $this->host->get();
 
 		foreach ($this->config['cron']['jobs'] as $key => $cron)
 		{
@@ -55,6 +67,25 @@ class FaultyCronsProvider
 				continue;
 			}
 
+			// a job without a single execution on this host has not had its first slot yet: it
+			// is neither failed nor stale, only pending. Without this distinction every release
+			// that ships a new monitored job reports unhealthy until the job has run once - which
+			// it cannot before the release is live, so a deployment that waits for the health
+			// check never gets there. A job that ran and died is told apart from this by the
+			// clean up, which always keeps the newest execution - see Execution\Cleaner
+			$executionsCount = $this->repository->countWithFilter(
+				FilterChain::create()
+					->addFilter(ExecutionDbFilter\Job::is($key))
+					->addFilter(ExecutionDbFilter\Host::is($host))
+			);
+
+			if ($executionsCount === 0)
+			{
+				$report->addPending($key);
+
+				continue;
+			}
+
 			$monitoringThreshold = $monitoring->getThreshold();
 
 			$endTime = new DateTime();
@@ -64,7 +95,7 @@ class FaultyCronsProvider
 				FilterChain::create()
 					->addFilter(ExecutionDbFilter\Job::is($key))
 					->addFilter(ExecutionDbFilter\Status::is(Status::FINISHED))
-					->addFilter(ExecutionDbFilter\Host::is($this->host->get()))
+					->addFilter(ExecutionDbFilter\Host::is($host))
 					->addFilter(ExecutionDbFilter\EndTime::min($endTime))
 					->addFilter(ExecutionDbFilter\ExitCode::is(0))
 			);
@@ -72,12 +103,14 @@ class FaultyCronsProvider
 			// there must be at least one successful item within threshold, otherwise it is faulty
 			if ($finishedItemsCount === 0)
 			{
-				$faultyCrons[] = FaultyCron::create()
-					->setKey($key)
-					->setCron($cron);
+				$report->addFaulty(
+					FaultyCron::create()
+						->setKey($key)
+						->setCron($cron)
+				);
 			}
 		}
 
-		return $faultyCrons;
+		return $report;
 	}
 }
